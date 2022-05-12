@@ -1,0 +1,40 @@
+stages:
+  - build
+  - deploy
+
+build:
+  image: node:14.19
+  stage: build
+  before_script:
+    - yarn install
+  script:
+    - yarn build
+  artifacts:
+    paths:
+      - build/
+      
+deploy-to-staging:
+  tags:
+    - shell
+  stage: deploy
+  environment:
+    name: staging
+    url: staging.pret-a-oser-client.ghesmoune.com
+  script:
+    - ssh  $SERVER_USER@$SERVER_HOST "rm -rf ~/public_html/pret-a-oser/staging/pret-a-oser-client/* && ls -la ~/public_html/pret-a-oser/staging/pret-a-oser-client"
+    - scp -P22 -r ./build/* $SERVER_USER@$SERVER_HOST:~/public_html/pret-a-oser/staging/pret-a-oser-client/
+  except:
+    - main
+
+deploy-to-production:
+  tags:
+    - shell
+  stage: deploy
+  environment:
+    name: production
+    url: production.pret-a-oser-client.ghesmoune.com
+  script:
+    - ssh  $SERVER_USER@$SERVER_HOST "rm -rf ~/public_html/pret-a-oser/production/pret-a-oser-client/* && ls -la ~/public_html/pret-a-oser/production/pret-a-oser-client"
+    - scp -P22 -r ./build/* $SERVER_USER@$SERVER_HOST:~/public_html/pret-a-oser/production/pret-a-oser-client/
+  only:
+    - main
